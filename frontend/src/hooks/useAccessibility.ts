@@ -14,7 +14,7 @@ const STORAGE_KEY = "accessibility-settings";
 const defaultSettings: AccessibilitySettings = {
   dyslexiaFont: false,
   textSize: "medium",
-  theme: "system",
+  theme: "light",
 };
 
 export const useAccessibility = () => {
