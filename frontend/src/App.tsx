@@ -8,6 +8,8 @@ import ReportWaste from "./pages/ReportWaste";
 import WaterTesting from "./pages/WaterTesting";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import NotFound from "./pages/NotFound";
+import FloatingChatModel from "@/components/FloatingChatModel";
+
 
 const queryClient = new QueryClient();
 
@@ -17,17 +19,20 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        {/* ✅ Floating Chatbot mounted globally */}
+        <FloatingChatModel />  
+
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/report-waste" element={<ReportWaste />} />
           <Route path="/water-testing" element={<WaterTesting />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
+
 
 export default App;

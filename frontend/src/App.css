@@ -5,6 +5,17 @@
   text-align: center;
 }
 
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  background-color: #1f2937 !important; /* Ensures autofill background is dark */
+  color: #fff !important; /* Ensures autofill text is white */
+  -webkit-box-shadow: 0 0 0px 1000px #1f2937 inset !important;
+  box-shadow: 0 0 0px 1000px #1f2937 inset !important;
+}
+
+
+
 .logo {
   height: 6em;
   padding: 1.5em;
