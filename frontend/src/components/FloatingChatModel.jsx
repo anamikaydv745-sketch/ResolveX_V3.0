@@ -205,26 +205,23 @@ const FloatingChatbotModal = () => {
 
 
 
-            <Button
-            size="icon"
-            className={`transition-colors duration-200 ${
-                listening
-                ? "bg-green-500 hover:bg-green-600"
-                : "bg-red-500 hover:bg-red-600"
-            }`}
-            onClick={handleMicClick}
-            >
-            <Mic className="w-5 h-5 text-white" />
-            </Button>
+            {/* Send button (was mic #1) */}
+<Button
+  size="icon"
+  className="bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200"
+  onClick={() => sendMessage()}
+  aria-label="Send message"
+  disabled={!input.trim()}
+>
+  <Send className="w-5 h-5 text-white" />
+</Button>
 
-
-            {recognition && (
+{/* Voice mic (mic #2 stays as recorder toggle) */}
+{recognition && (
   <Button
     size="icon"
     className={`transition-colors duration-200 ${
-      listening
-        ? "bg-green-500 hover:bg-green-600"
-        : "bg-red-500 hover:bg-red-600"
+      listening ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"
     }`}
     onClick={handleMicClick}
     aria-label={listening ? "Stop recording" : "Start recording"}
@@ -232,7 +229,6 @@ const FloatingChatbotModal = () => {
     <Mic className="w-5 h-5 text-white" />
   </Button>
 )}
-
 
           </DialogFooter>
         </DialogContent>
