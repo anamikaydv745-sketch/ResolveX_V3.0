@@ -45,7 +45,7 @@ const ReportWaste = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
-  const BACKEND_URL = "http://127.0.0.1:5001"; // change if deployed
+  const BACKEND_URL = import.meta.env.VITE_API_BASE; // change if deployed
 
   useEffect(() => {
     return () => {
@@ -78,46 +78,55 @@ const ReportWaste = () => {
     }
   };
 
-  // 🚀 Simulated AI waste analysis
-  const analyzeImage = (file: File): Promise<{ type: string }> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockTypes = [
-          "biomedical",
-          "plastic",
-          "ewaste",
-          "organic",
-          "construction",
-        ];
-        const randomType =
-          mockTypes[Math.floor(Math.random() * mockTypes.length)];
-        toast({
-          title: "AI Analysis Complete",
-          description: `Detected waste type: ${randomType}`,
-        });
-        resolve({ type: randomType });
-      }, 1500);
-    });
-  };
 
   const runAnalysis = async (analysisFile: File) => {
     if (files.length > 0) return;
     setIsAnalyzing(true);
     getCurrentLocation();
+  
     try {
-      const aiResult = await analyzeImage(analysisFile);
-      setWasteType(aiResult.type);
+      // Send file to backend for classification
+      const formData = new FormData();
+      formData.append("file", analysisFile);
+      formData.append("kind", "image");
+  
+      const res = await fetch(`${BACKEND_URL}/process`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+  
+      if (data.status === "spam") {
+        toast({
+          title: "Spam / Irrelevant Photo",
+          description: data.message || "Please upload another, clearer waste photo.",
+          variant: "destructive",
+        });
+        // Discard the not-relevant image:
+        setFiles([]);
+        setPreviews([]);
+        setWasteType("");
+        // Don't proceed
+        return;
+      } else {
+        // Waste detected: auto-select type
+        setWasteType(data.issue_category);
+        toast({
+          title: "AI Analysis Complete",
+          description: `Detected waste type: ${data.issue_category}`,
+        });
+      }
     } catch {
       toast({
         title: "AI Error",
-        description:
-          "Could not analyze image. Please select type manually.",
+        description: "Could not analyze image. Please select type manually.",
         variant: "destructive",
       });
     } finally {
       setIsAnalyzing(false);
     }
   };
+  
 
   const addFilesToReport = (newFiles: File[]) => {
     const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
@@ -172,9 +181,11 @@ const ReportWaste = () => {
         body: JSON.stringify({
           title: wasteType,
           description,
+          landmark,
           images: base64File ? [base64File] : [],
         }),
       });
+      
 
       const data = await res.json();
 
@@ -392,11 +403,11 @@ const ReportWaste = () => {
                         <SelectValue placeholder="AI will select waste category..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="biomedical">Biomedical</SelectItem>
-                        <SelectItem value="plastic">Plastic</SelectItem>
-                        <SelectItem value="organic">Organic</SelectItem>
-                        <SelectItem value="ewaste">E-Waste</SelectItem>
-                        <SelectItem value="construction">
+                        <SelectItem value="Biomedical">Biomedical</SelectItem>
+                        <SelectItem value="Plastic">Plastic</SelectItem>
+                        <SelectItem value="Organic">Organic</SelectItem>
+                        <SelectItem value="E-Waste">E-Waste</SelectItem>
+                        <SelectItem value="Construction">
                           Construction
                         </SelectItem>
                       </SelectContent>
