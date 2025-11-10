@@ -111,82 +111,56 @@ const WaterTesting = () => {
     }
   };
 
-  // <-- MODIFIED: Mock prediction function (removed nitrate logic)
-  const generateMockPrediction = (): PredictionResult => {
-    const numPh = parseFloat(ph) || 7;
-    const numTurbidity = parseFloat(turbidity) || 1;
-    // <-- REMOVED: numNitrate
-    // const numNitrate = parseFloat(nitrate) || 1;
+  
 
-    let status: PredictionResult["status"] = "Good";
-    let recommendations: string[] = ["Water appears safe for general use."];
-
-    if (
-      numPh < 6.5 ||
-      numPh > 8.5 ||
-      numTurbidity > 5 ||
-      // <-- REMOVED: nitrate check
-      // numNitrate > 10 ||
-      coliform === "present" ||
-      coliform === "high"
-    ) {
-      status = "Poor";
-      recommendations = [
-        "Action Required: Water is not safe for consumption.",
-        "Notify local health authorities immediately.",
-        "Boil water before use.",
-      ];
-    } else if (numPh < 7 || numTurbidity > 3) {
-      status = "Moderate";
-      recommendations = [
-        "Water quality is moderate. Monitor closely.",
-        "Consider using a water filter for drinking.",
-      ];
-    }
-
-    return {
-      status,
-      ph: parseFloat(ph) || null,
-      turbidity: parseFloat(turbidity) || null,
-      coliform: coliform || "N/A",
-      recommendations,
-    };
-  };
-
+  
   // <-- (handleSubmit is unchanged, but updated the commented-out reset line)
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setPredictionResult(null);
+  // --- Remove: generateMockPrediction and its usage --- //
 
-    // Simulate an API call for prediction (2-second delay)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+// --- Add: API Call to backend for prediction --- //
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  setPredictionResult(null);
 
-    try {
-      // Generate the mock prediction
-      const result = generateMockPrediction();
-      setPredictionResult(result);
-      setIsModalOpen(true); // Open the modal
+  try {
+    // Prepare request payload
+    const payload = {
+      ph,
+      turbidity,
+      tds,
+      conductivity,
+      hardness,
+      coliform, // "absent", "present", "high"
+      location,
+      source,
+    };
+    // Call to Flask backend
+    const res = await fetch(`${import.meta.env.VITE_API_BASE}/predict`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const result = await res.json();
+    setPredictionResult(result);
+    setIsModalOpen(true);
 
-      toast({
-        title: "Prediction Complete!",
-        description: "Your water quality analysis is ready.",
-      });
+    toast({
+      title: "Prediction Complete!",
+      description: "Your water quality analysis is ready.",
+    });
 
-      // Optional: Reset form fields after successful submission
-      // <-- MODIFIED: Updated this commented line
-      // setLocation(""); setSource(""); setPh(""); setTurbidity("");
-      // setTds(""); setConductivity(""); setHardness(""); setColiform("");
-    } catch (error) {
-      toast({
-        title: "Submission Failed",
-        description: "Could not process your data. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false); // Stop the loader
-    }
-  };
+  } catch (error) {
+    toast({
+      title: "Submission Failed",
+      description: "Could not process your data. Please try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -322,14 +296,14 @@ const WaterTesting = () => {
                             <Label htmlFor="tds">
                               TDS{" "}
                               <span className="text-muted-foreground text-sm">
-                                (ppm)
+                                (mg/l)
                               </span>
                             </Label>
                             <Input
                               id="tds"
                               type="number"
                               step="0.1"
-                              placeholder="e.g., 300"
+                              placeholder="e.g., 10000"
                               value={tds}
                               onChange={(e) => setTds(e.target.value)}
                             />

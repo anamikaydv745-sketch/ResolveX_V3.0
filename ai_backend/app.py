@@ -5,7 +5,8 @@ import re
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import openai
-
+import pickle
+import numpy as np
 # Initialize Flask app
 app = Flask(__name__, static_folder='../frontend/dist', template_folder='../frontend/dist')
 CORS(app)
@@ -242,6 +243,68 @@ def moderate_report():
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
+
+# ------------------------------------------------------------
+# Log Water Testing
+# ------------------------------------------------------------
+# load model
+with open("bagging_model.pkl", "rb") as f:
+    model = pickle.load(f)
+
+with open("scaler.pkl", "rb") as f:
+    scaler = pickle.load(f)
+
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    data = request.get_json()
+
+    ph = float(data.get('ph', 7))
+    turbidity = float(data.get('turbidity', 1))
+    tds = float(data.get('tds', 300))
+    conductivity = float(data.get('conductivity', 400))
+    hardness = float(data.get('hardness', 150))
+    coliform = data.get('coliform', "absent")
+
+    # If coliform present or high, always "Poor"
+    if coliform in ['present', 'high']:
+        result = {
+            "status": "Poor",
+            "ph": ph,
+            "turbidity": turbidity,
+            "coliform": coliform,
+            "recommendations": [
+                "Action Required: Water is not safe for consumption.",
+                "Notify local health authorities immediately.",
+                "Boil water before use."
+            ]
+        }
+    else:
+        # Model expects array of the five features
+        input_features = np.array([[ph, hardness, tds, conductivity, turbidity]])
+        x_scaled = scaler.transform(input_features)
+        pred = model.predict(x_scaled)  # Should output 1 for Good, 0 for Poor
+
+        status = "Good" if pred[0]==1 else "Poor"
+        recommendations = [
+            "Water appears safe for general use."
+        ] if status == "Good" else [
+            "Action Required: Water is not safe for consumption.",
+            "Notify local health authorities immediately.",
+            "Boil water before use."
+        ]
+        result = {
+            "status": status,
+            "ph": ph,
+            "turbidity": turbidity,
+            "coliform": coliform,
+            "recommendations": recommendations
+        }
+
+    return jsonify(result)
 
 
 # ------------------------------------------------------------

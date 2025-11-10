@@ -3,3 +3,5 @@ flask-cors
 openai==0.28
 requests
 python-dotenv
+numpy
+scikit-learn
