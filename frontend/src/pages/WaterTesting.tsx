@@ -1,5 +1,7 @@
 // --- Imports ---
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+
 // <-- (Imports are unchanged from your last version)
 import {
   Droplet,
@@ -42,7 +44,8 @@ import Header from "@/components/Header";
 import WaterAnalytics from "@/components/WaterAnalytics";
 import WaterQualityHeatMap from "@/components/WaterQualityHeatMap";
 
-// (PredictionResult type is unchanged)
+
+//  (PredictionResult type is unchanged)
 type PredictionResult = {
   status: "Good" | "Poor" | "Moderate";
   ph: number | null;
@@ -53,7 +56,7 @@ type PredictionResult = {
 
 const WaterTesting = () => {
   const { toast } = useToast();
-
+  const { accessToken } = useAuth();
   // --- Form States ---
   const [location, setLocation] = useState("");
   const [source, setSource] = useState("");
@@ -626,6 +629,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           coliformPresence: coliform,
           status: predictionResult.status,
           recommendations: predictionResult.recommendations,
+          oauthAccessToken: accessToken, 
         };
 
         const res = await fetch(`${import.meta.env.VITE_NODE_API_BASE}/api/water/notify`, {
@@ -634,7 +638,17 @@ const handleSubmit = async (e: React.FormEvent) => {
           body: JSON.stringify(payload),
         });
 
-        if (res.ok) {
+        // 2. Post to n8n webhook URL (new call to send email)
+        const n8nRes = await fetch(import.meta.env.VITE_N8N_WEBHOOK_URL, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json" ,
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok || n8nRes.ok) {
           toast({
             title: "Report Sent",
             description:
