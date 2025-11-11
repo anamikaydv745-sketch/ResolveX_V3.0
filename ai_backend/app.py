@@ -7,6 +7,8 @@ from flask_cors import CORS
 import openai
 import pickle
 import numpy as np
+from werkzeug.utils import secure_filename
+import base64
 # Initialize Flask app
 app = Flask(__name__, static_folder='../frontend/dist', template_folder='../frontend/dist')
 CORS(app)
@@ -33,7 +35,7 @@ def serve_static(path):
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
-        user_msg = request.json.get("message", "")
+        user_msg = request.json.get("message", "").strip()
         if not user_msg:
             return jsonify({"reply": "⚠️ Please enter a valid query."})
 
@@ -44,208 +46,43 @@ def chat():
                     "role": "system",
                     "content": (
                         "You are Civic AI Assistant for a civic issue reporting portal. "
-                        "Your role is to guide users on civic issues, how to report them, "
-                        "and how to use the platform. Be concise, friendly, and informative."
-                    )
+                        "Report Waste Issues - Users can click on report waste issues and then open their camera, capture a waste image, and automatically "
+                        "attach their live location to report the issue directly to local authorities. "
+                        "The AI system analyzes the image to confirm it's waste-related before submission.\n"
+                        "Test Water Quality – Users click on water testing and then their testing location is automatically fetched, select a water source type, "
+                        "and input key water parameters including:\n"
+                        "- pH Level (0–14)\n"
+                        "- Turbidity (NTU)\n"
+                        "- TDS(mg/L)\n"
+                        "- Conductivity \n"
+                        "- Hardness \n"
+                        "- Coliform Presence\n"
+                        "The AI analyzes these inputs to determine the overall water quality and provide suggestions "
+                        "on whether the water is safe or needs treatment.\n\n"
+                        "Check Air Quality Index (AQI) – Users can view real-time AQI levels for their current location which is shown in real time at all time in the top header . If any ask tell them this specific in short .\n\n"
+                        "Your responsibilities:\n"
+                        "- Greet users warmly and guide them through the platform.\n"
+                        "- If someone is new or asks 'how to use', explain all main features simply.\n"
+                        "- If they ask about reporting waste, explain the camera upload + live location process.\n"
+                        "- If they ask about water testing, explain how to upload and analyze water.\n"
+                        "- If they ask about AQI, explain what it means and where to find it.\n"
+                        "- Stay civic-focused, positive, and helpful — encourage users to make a difference.\n\n"
+                        "Always end responses with an encouraging line such as: "
+                        "'🌱 Together, we can make our city cleaner and healthier!'"
+                        "Tell in precise and do not use '**' and ':' and emoji in code . "
+                        "Make the chat professional and tell in steps where needed ."
+                    ),
                 },
                 {"role": "user", "content": user_msg},
             ],
         )
 
-        reply = response.choices[0].message["content"]
+        reply = response.choices[0].message["content"].strip()
         return jsonify({"reply": reply})
 
     except Exception as e:
         print(f"💥 Chatbot Error: {e}")
         return jsonify({"reply": "❌ Server error, please try again later."}), 500
-
-
-# ------------------------------------------------------------
-# 🧠 Spam Detection Helpers
-# ------------------------------------------------------------
-def is_gibberish(text: str) -> bool:
-    """Detect random or meaningless text."""
-    if not text:
-        return True
-    # Too many consonants or special chars
-    if re.search(r"[^aeiou\s]{6,}", text.lower()):
-        return True
-    # Random mixed-case nonsense
-    if re.search(r"[A-Z]{3,}[a-z]{3,}", text):
-        return True
-    # Repeated meaningless words or short strings
-    if len(text.split()) <= 2 and len(text) < 10:
-        return True
-    # Known junk patterns
-    junk_words = ["asdf", "qwerty", "uyrithjalfy", "sd;ao9fucgq3jbc", "lorem", "dummy"]
-    if any(j in text.lower() for j in junk_words):
-        return True
-    return False
-
-
-# ------------------------------------------------------------
-# 🧹 Process Image and Extract Waste Info (existing)
-# ------------------------------------------------------------
-@app.route("/process", methods=["POST"])
-def process_media():
-    try:
-        print("🔹 Received request at /process")
-
-        if "file" not in request.files:
-            return jsonify({"error": "No file uploaded"}), 400
-
-        uploaded_file = request.files["file"]
-        kind = request.form.get("kind", "image")
-
-        allowed_categories = [
-            "Pothole", "Street Light", "Garbage/Waste",
-            "Traffic Signal", "Sidewalk", "Water Issue", "Other"
-        ]
-        high_priority = {"Pothole", "Traffic Signal"}
-
-        if kind == "image":
-            file_bytes = uploaded_file.read()
-            base64_image = base64.b64encode(file_bytes).decode("utf-8")
-
-            # 🔎 Ask GPT to describe what’s in the image
-            gpt_check = openai.ChatCompletion.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "You are an image verifier for civic waste reports."},
-                    {"role": "user", "content": [
-                        {"type": "text", "text": "Describe this image briefly."},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
-                    ]}
-                ]
-            )
-            image_desc = gpt_check.choices[0].message["content"].lower()
-            print(f"🧩 Image description: {image_desc}")
-
-            # 🚫 Detect non-waste (social/selfie/fun images)
-            if any(word in image_desc for word in ["person", "selfie", "face", "human", "group", "fun", "social media", "party", "animal not waste"]):
-                return jsonify({
-                    "status": "spam",
-                    "message": "This image does not appear to show waste or civic issue."
-                }), 200
-
-            # 🧠 Extract issue type if valid
-            response = openai.ChatCompletion.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are an assistant that extracts civic issue details from an image. "
-                            "Return JSON with 'issue_title', 'issue_category', 'detailed_description'. "
-                            "Allowed categories: Pothole, Street Light, Garbage/Waste, Traffic Signal, Sidewalk, Water Issue, Other."
-                        ),
-                    },
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": "Extract issue details as JSON."},
-                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
-                        ],
-                    },
-                ],
-                response_format={"type": "json_object"},
-            )
-
-            raw = response.choices[0].message["content"]
-            try:
-                parsed = json.loads(raw)
-            except Exception:
-                parsed = {"issue_title": "Untitled", "issue_category": "Other", "detailed_description": ""}
-
-            cat = parsed.get("issue_category", "Other")
-            if cat not in allowed_categories:
-                cat = "Other"
-
-            result = {
-                "issue_title": parsed.get("issue_title", "Untitled"),
-                "issue_category": cat,
-                "detailed_description": parsed.get("detailed_description", ""),
-                "priority": "high" if cat in high_priority else "medium"
-            }
-
-            return jsonify(result)
-
-        elif kind == "video":
-            return jsonify({
-                "issue_title": "Video Report",
-                "issue_category": "Other",
-                "detailed_description": "Video uploaded (not analyzed).",
-                "priority": "medium"
-            })
-
-        else:
-            return jsonify({"error": "Unsupported media kind"}), 400
-
-    except Exception as e:
-        print(f"💥 ERROR: {e}")
-        return jsonify({"error": str(e)}), 500
-
-
-# ------------------------------------------------------------
-# 🧠 Text + Image Spam Detection Endpoint
-# ------------------------------------------------------------
-@app.route("/moderate", methods=["POST"])
-def moderate_report():
-    try:
-        data = request.json
-        title = data.get("title", "")
-        description = data.get("description", "")
-        images = data.get("images", [])
-
-        # 🧩 1️⃣ Local gibberish / nonsense check
-        if is_gibberish(title) or is_gibberish(description):
-            return jsonify({"status": "spam", "message": "Irrelevant or gibberish text detected"}), 200
-
-        # 🧩 2️⃣ AI-based relevance check
-        relevance_prompt = f"""
-        You are validating a civic report.
-        Title: "{title}"
-        Description: "{description}"
-
-        Rules:
-        - If text is gibberish or meaningless, mark as SPAM.
-        - If text unrelated to civic issues (waste, pothole, water, etc.), mark as SPAM.
-        - Otherwise, mark VALID.
-        Respond with only 'SPAM' or 'VALID'.
-        """
-
-        relevance_check = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": relevance_prompt}]
-        )
-        decision = relevance_check.choices[0].message["content"].strip().upper()
-
-        if "SPAM" in decision:
-            return jsonify({"status": "spam", "message": "Report looks irrelevant or invalid"}), 200
-
-        # 🧩 3️⃣ Optional image validation again (fast)
-        for img_b64 in images:
-            img_check = openai.ChatCompletion.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "You are checking if the uploaded image is civic issue related."},
-                    {"role": "user", "content": [
-                        {"type": "text", "text": "Does this image show waste, garbage, or civic issue? Answer YES or NO."},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}}
-                    ]}
-                ]
-            )
-            answer = img_check.choices[0].message["content"].strip().lower()
-            if "no" in answer:
-                return jsonify({"status": "spam", "message": "Image seems unrelated to civic waste or issue"}), 200
-
-        return jsonify({"status": "ok", "message": "Report is valid"}), 200
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-
-
 
 # ------------------------------------------------------------
 # Log Water Testing
@@ -256,6 +93,10 @@ with open("bagging_model.pkl", "rb") as f:
 
 with open("scaler.pkl", "rb") as f:
     scaler = pickle.load(f)
+
+
+
+
 
 
 @app.route('/predict', methods=['POST'])
@@ -305,6 +146,145 @@ def predict():
         }
 
     return jsonify(result)
+
+
+
+
+
+
+# Only these categories allowed for waste
+allowed_categories = [
+    "Biomedical",
+    "Plastic",
+    "Organic",
+    "E-Waste",
+    "Construction"
+]
+
+# Keyword mapping for accuracy (expandable)
+mapping_keywords = [
+    (["biomedical", "medical waste", "infectious", "clinical"], "Biomedical"),
+    (["plastic", "polythene", "polymer", "plastic bag"], "Plastic"),
+    (["organic", "compost", "food waste", "vegetable", "fruit", "biodegradable", "decomposition"], "Organic"),
+    (["e-waste", "electronic", "appliance", "gadget", "circuit", "battery", "monitor", "mobile"], "E-Waste"),
+    (["construction", "debris", "rubble", "brick", "cement", "demolition", "concrete"], "Construction"),
+]
+
+@app.route("/process", methods=["POST"])
+def process_waste():
+    try:
+        if "file" not in request.files:
+            return jsonify({"status": "error", "message": "No file uploaded"}), 400
+
+        uploaded_file = request.files["file"]
+        kind = request.form.get("kind", "image")
+
+        if kind != "image":
+            return jsonify({"status": "error", "message": "Only images are supported"}), 400
+
+        file_bytes = uploaded_file.read()
+        image_base64 = base64.b64encode(file_bytes).decode("utf-8")
+        image_data_url = f"data:image/jpeg;base64,{image_base64}"
+
+        # Strong prompt for OpenAI model
+        prompt = (
+            "You are an expert waste classifier. "
+            "Classify the attached image into EXACTLY one of: Biomedical, Plastic, Organic, E-Waste, Construction. "
+            "If the image does not look like any of those categories at all, reply ONLY with the word 'spam'. "
+            "Otherwise, reply with category name ONLY (no explanation)."
+        )
+
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini", # highly accurate, latest, fast
+            messages=[
+                {
+                    "role": "system",
+                    "content": prompt
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Classify this image (reply with: one category or 'spam')."},
+                        {"type": "image_url", "image_url": {"url": image_data_url}}
+                    ]
+                }
+            ],
+            max_tokens=10,
+            timeout=30
+        )
+
+        result = response.choices[0].message["content"].strip().lower()
+        print("OpenAI says:", result)
+
+        mapped_category = None
+        for cat in allowed_categories:
+            if result == cat.lower():
+                mapped_category = cat
+                break
+        if not mapped_category:
+            for cat in allowed_categories:
+                if cat.lower() in result:
+                    mapped_category = cat
+                    break
+
+        if not mapped_category:
+            for keywords, target_cat in mapping_keywords:
+                for kw in keywords:
+                    if kw in result:
+                        mapped_category = target_cat
+                        break
+                if mapped_category:
+                    break
+
+        if mapped_category:
+            return jsonify({"status": "ok", "issue_category": mapped_category}), 200
+
+        # If spam or can't match, block image
+        return jsonify({"status": "spam", "message": "Not a relevant waste photo, please upload another."}), 200
+
+    except Exception as e:
+        print("ERROR at /process:", e)
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
+@app.route("/moderate", methods=["POST"])
+def moderate_report():
+    data = request.get_json()
+    landmark = data.get("landmark", "")
+    description = data.get("description", "")
+
+    user_text = f"Nearest Landmark: {landmark}\nAdditional Details: {description}"
+
+    # Strong prompt to catch gibberish
+    prompt = (
+        "You are a strict civic report spam detector. "
+        "If the given details are gibberish, random characters, meaningless words, or not a real place/description, reply only with 'spam'. "
+        "If the details are meaningful, contain actual location or relevant problem info, reply only with 'clean'."
+    )
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": user_text}
+            ],
+            max_tokens=5,
+            timeout=30
+        )
+        result = response.choices[0].message["content"].strip().lower()
+        print("GPT moderation result:", result)
+        if "spam" in result:
+            return jsonify({"status": "spam", "message": "Your report contains gibberish or irrelevant details. Please enter real information."})
+        else:
+            return jsonify({"status": "clean"})
+
+    except Exception as e:
+        print("Moderation error:", e)
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 
 
 # ------------------------------------------------------------

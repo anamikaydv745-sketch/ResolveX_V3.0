@@ -10,29 +10,39 @@ import LeaderboardPage from "./pages/LeaderboardPage";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import FloatingChatModel from "@/components/FloatingChatModel";
-
+import TrackReports from "./pages/TrackReports";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <GoogleOAuthProvider clientId={googleClientId}>
+    <AuthProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        {/* ✅ Floating Chatbot mounted globally */}
-        <FloatingChatModel />  
+  <FloatingChatModel />
 
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/report-waste" element={<ReportWaste />} />
-          <Route path="/water-testing" element={<WaterTesting />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+  
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/report-waste" element={<ReportWaste />} />
+      <Route path="/water-testing" element={<WaterTesting />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/leaderboard" element={<LeaderboardPage />} />
+      <Route path="/trackreports" element={<TrackReports />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+ 
+</BrowserRouter>
+
+ </TooltipProvider>
+    </AuthProvider>
+    </GoogleOAuthProvider>
   </QueryClientProvider>
 );
 
