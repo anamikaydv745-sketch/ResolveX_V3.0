@@ -18,5 +18,5 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/waste", wasteRoutes);
 app.use("/api/water", waterRoutes);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
