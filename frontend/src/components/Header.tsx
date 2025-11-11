@@ -16,14 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu"; // Import Dropdown
 import AccessibilityControls from "@/components/AccessibilityControls";
 import React, { useEffect, useState } from "react";
-<<<<<<< HEAD
-import SudhaarLogo from "@/assets/sudhaar_logo.png";
-
-
-=======
 import { useAuth } from "@/contexts/AuthContext"; // Import useAuth hook
 import { LoginButton } from "@/components/LoginButton"; // Import LoginButton
->>>>>>> a54a6fe4c7c6c851a949c063ad07be75693c0347
 
 // US EPA AQI Breakpoints for PM2.5
 function calculateAqiPm25(pm25: number) {
@@ -182,14 +176,10 @@ const Header: React.FC = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center gap-2 transition-base hover:opacity-80">
-           
-          <img
-    src={SudhaarLogo}
-    alt="Sudhaar Logo"
-    className="w-52 h-auto object-contain mr-4"
-   
-  />
-
+            <div className="rounded-full bg-primary p-2">
+              <Leaf className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="text-xl font-bold text-foreground">SUDHAAR</span>
           </Link>
           <AQIMeter /> {/* Your AQI meter is included here */}
         </div>
