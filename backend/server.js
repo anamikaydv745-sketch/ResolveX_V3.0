@@ -17,7 +17,32 @@ if (!fs.existsSync("uploads")) {
 const app = express();
 
 // Middleware
-app.use(cors());
+
+// --- CORS Configuration ---
+const allowedOrigins = [
+  'http://localhost:8080', // Your local frontend
+  // Add your deployed frontend URL here when you have it
+  // 'https://your-frontend-app.onrender.com' 
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true, // Allows cookies to be sent (if you use them)
+  methods: 'GET,POST,PUT,DELETE,PATCH,OPTIONS', // Explicitly allow methods
+  allowedHeaders: 'Content-Type,Authorization' // Explicitly allow headers
+}));
+app.options('*', cors());
+// --- End CORS Configuration ---
+
+app.use(express.json({ limit: "10mb" }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/uploads", express.static("uploads"));
