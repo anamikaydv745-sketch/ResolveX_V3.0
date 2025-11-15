@@ -1,4 +1,5 @@
 import { useState, ChangeEvent, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Camera,
   MapPin,
@@ -34,6 +35,7 @@ import { VideoModal } from "@/components/VideoModal";
 
 const ReportWaste = () => {
   const { toast } = useToast();
+  const { accessToken } = useAuth();
 
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -211,66 +213,111 @@ const ReportWaste = () => {
     }
   };
 
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve((reader.result as string).split(",")[1]);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+
   // 🚀 Submit Report (after spam check)
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!files.length) {
+    if (!files.length) {
+      toast({
+        title: "Missing Media",
+        description: "Please upload or capture at least one image.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("wasteType", wasteType);
+      formData.append("location", location);
+      formData.append("landmark", landmark);
+      formData.append("description", description);
+      files.forEach((file) => formData.append("media", file));
+
+      const res = await fetch(`${NODE_API}/api/waste/report`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Submission failed");
+
+      // Convert files to base64 for n8n payload
+      const base64Files = await Promise.all(files.map(fileToBase64));
+
+      // Prepare payload for n8n webhook
+      const n8nPayload = {
+        wasteType,
+        location,
+        landmark,
+        description,
+        media: base64Files,
+        oauthAccessToken: accessToken, // include accessToken as requested
+      };
+
+
+      // Send to n8n webhook
+      const n8nRes = await fetch(import.meta.env.VITE_N8N_WEBHOOK_URL2, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`, // pass token in header as well
+        },
+        body: JSON.stringify(n8nPayload),
+      });
+
+      if (!n8nRes.ok) {
+        toast({
+          title: "Notification Failed",
+          description: "Could not notify authorities via webhook.",
+          variant: "destructive",
+        });
+      }
+
+
+
+      toast({
+        title: "✅ Report Submitted",
+        description: "Your waste report has been successfully stored.",
+      });
+
+      // Reset form
+      setFiles([]);
+      setPreviews([]);
+      setLocation("");
+      setWasteType("");
+      setLandmark("");
+      setDescription("");
+    } catch (err: unknown) {
+    console.error(err);
+    const message =
+      err instanceof Error
+        ? err.message
+        : "Unable to submit report. Try again later.";
+
     toast({
-      title: "Missing Media",
-      description: "Please upload or capture at least one image.",
+      title: "Submission Failed",
+      description: message,
       variant: "destructive",
     });
-    return;
   }
-
-  setIsAnalyzing(true);
-
-  try {
-    const formData = new FormData();
-    formData.append("wasteType", wasteType);
-    formData.append("location", location);
-    formData.append("landmark", landmark);
-    formData.append("description", description);
-    files.forEach((file) => formData.append("media", file));
-
-    const res = await fetch(`${NODE_API}/api/waste/report`, {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) throw new Error(data.message || "Submission failed");
-
-    toast({
-      title: "✅ Report Submitted",
-      description: "Your waste report has been successfully stored.",
-    });
-
-    // Reset form
-    setFiles([]);
-    setPreviews([]);
-    setLocation("");
-    setWasteType("");
-    setLandmark("");
-    setDescription("");
-  } catch (err: unknown) {
-  console.error(err);
-  const message =
-    err instanceof Error
-      ? err.message
-      : "Unable to submit report. Try again later.";
-
-  toast({
-    title: "Submission Failed",
-    description: message,
-    variant: "destructive",
-  });
-}
- finally {
-    setIsAnalyzing(false);
-  }
+  finally {
+      setIsAnalyzing(false);
+    }
 };
 
 
