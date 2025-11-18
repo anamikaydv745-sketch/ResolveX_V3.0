@@ -170,7 +170,7 @@ const Index = () => {
 
     <Card className="max-w-6xl mx-auto shadow-elevated overflow-hidden">
       <CardContent className="p-0">
-        <div className="aspect-video w-full">
+        <div className="w-full h-[500px]">
           <LiveEnvironmentalMap />
         </div>
       </CardContent>
@@ -258,7 +258,7 @@ const Index = () => {
             </div>
           </div>
           <div className="border-t border-border pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; 2025 Eco-Citizen Hub. Empowering communities for a cleaner tomorrow.</p>
+            <p>&copy; 2025 Sudhaar. Empowering communities for a cleaner tomorrow.</p>
           </div>
         </div>
       </footer>

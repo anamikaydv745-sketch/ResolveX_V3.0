@@ -394,7 +394,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                       <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4 flex items-start gap-3">
                         <Droplet className="h-5 w-5 text-secondary flex-shrink-0 mt-0.5" />
                         <div className="text-sm">
-                          <p className="font-medium text-secondary-foreground mb-1">
+                          <p className="font-medium text-secondary mb-1">
                             IoT Sensor Integration
                           </p>
                           <p className="text-muted-foreground">
@@ -408,7 +408,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                       <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 flex items-start gap-3">
                         <AlertTriangle className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
                         <div className="text-sm">
-                          <p className="font-medium text-accent-foreground mb-1">
+                          <p className="font-medium text-accent mb-1">
                             Automatic Alerts
                           </p>
                           <p className="text-muted-foreground">

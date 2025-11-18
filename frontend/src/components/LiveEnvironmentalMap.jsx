@@ -34,26 +34,27 @@ const waterIcon = new L.DivIcon({
 // --- End of Updated Definitions ---
 
 const LiveEnvironmentalMap = () => {
-  // Focus near IIIT Bhagalpur, Bihar
-  const center = [25.2405, 87.0417];
+  // Focus near Bharat Mandapam , New Delhi
+  const center = [28.6129, 77.2273];
 
-  // Waste reports (sample)
-  const wasteReports = [
-    { id: 1, position: [25.243, 87.037], description: "Overflowing garbage bin near IIIT Bhagalpur gate" },
-    { id: 2, position: [25.236, 87.045], description: "Plastic waste dumping near Ganga riverbank" },
-    { id: 3, position: [25.248, 87.052], description: "Burning of biomedical waste near village outskirts" },
-    { id: 4, position: [25.250, 87.032], description: "Animal waste accumulation near market area" },
-    { id: 5, position: [25.238, 87.041], description: "Open landfill detected near residential zone" },
-  ];
+  // Waste reports — Delhi (around Bharat Mandapam)
+const wasteReports = [
+  { id: 1, position: [28.6129, 77.2273], description: "Garbage accumulation near Bharat Mandapam" },
+  { id: 2, position: [28.6205, 77.2334], description: "Overflowing dustbins near Supreme Court Road" },
+  { id: 3, position: [28.6091, 77.2295], description: "Waste dumping spotted near India Gate lawns" },
+  { id: 4, position: [28.6136, 77.2409], description: "Plastic waste near Purana Qila gate" },
+  { id: 5, position: [28.6182, 77.2231], description: "Roadside waste near Pragati Maidan metro" },
+];
 
-  // Water reports (sample)
-  const waterReports = [
-    { id: 1, position: [25.239, 87.047], description: "High turbidity detected in borewell sample" },
-    { id: 2, position: [25.245, 87.039], description: "Contaminated groundwater near drainage zone" },
-    { id: 3, position: [25.251, 87.049], description: "High nitrate level recorded near local pond" },
-    { id: 4, position: [25.247, 87.030], description: "Unusual color and odor in canal water" },
-    { id: 5, position: [25.242, 87.044], description: "Increased TDS in water testing sample" },
-  ];
+// Water issue reports — Delhi
+const waterReports = [
+  { id: 1, position: [28.6148, 77.2380], description: "Contaminated water sample near Purana Qila lake" },
+  { id: 2, position: [28.6101, 77.2291], description: "High TDS water found near India Gate" },
+  { id: 3, position: [28.6194, 77.2366], description: "Pipeline leakage reported near Supreme Court" },
+  { id: 4, position: [28.6167, 77.2318], description: "Strange odor in tap water near Pragati Maidan" },
+  { id: 5, position: [28.6212, 77.2255], description: "Water discoloration near ITPO complex" },
+];
+
 
   return (
     <div className="relative w-full h-full">
