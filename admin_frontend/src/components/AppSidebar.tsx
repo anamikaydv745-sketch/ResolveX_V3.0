@@ -12,13 +12,15 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
+
+
 const menuItems = [
   { title: "Overview", url: "/", icon: Home },
   { title: "Waste Management", url: "/waste", icon: Trash2 },
   { title: "Water Quality", url: "/water", icon: Droplets },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
-  { title: "Community Reports", url: "/reports", icon: Users },
-  { title: "Settings", url: "/settings", icon: Settings },
+//   { title: "Analytics", url: "/analytics", icon: BarChart3 },
+//   { title: "Community Reports", url: "/reports", icon: Users },
+  // { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -26,14 +28,14 @@ export function AppSidebar() {
     <Sidebar className="border-r border-border">
       <SidebarHeader className="p-6 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-            <Droplets className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Sudhaar</h1>
-            <p className="text-xs text-muted-foreground">Admin Dashboard</p>
-          </div>
-        </div>
+  <img
+    src="/sudhaar_logo.png"
+    alt="App Logo"
+    className="w-full h-10 rounded-md object-cover"
+  />
+  
+</div>
+
       </SidebarHeader>
       
       <SidebarContent>

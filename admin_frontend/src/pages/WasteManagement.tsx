@@ -4,6 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import type { LatLngExpression } from "leaflet";
+
+
+const defaultLocation: LatLngExpression = [28.6129, 77.2295]; // Example coords
+
+
 const wasteReports = [
   { id: "WR-2401", type: "Plastic Waste", location: "Sector 15, Block A", status: "In Progress", severity: "High", date: "2024-01-15", image: "📷" },
   { id: "WR-2400", type: "Organic Waste", location: "Green Park", status: "Pending", severity: "Medium", date: "2024-01-15", image: "📷" },
@@ -79,13 +87,24 @@ export default function WasteManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-96 bg-muted/30 rounded-lg flex items-center justify-center border-2 border-dashed border-border">
-            <div className="text-center">
-              <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">Interactive map showing all waste report locations</p>
-              <p className="text-sm text-muted-foreground mt-1">GPS coordinates pinned with color-coded severity markers</p>
-            </div>
-          </div>
+          <div className="h-96 rounded-lg overflow-hidden border">
+  <MapContainer
+    center={defaultLocation}
+    zoom={14}
+    scrollWheelZoom={true}
+    style={{ height: "100%", width: "100%" }}
+  >
+    <TileLayer
+      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      attribution="© OpenStreetMap contributors"
+    />
+    <Marker position={defaultLocation}>
+      <Popup>Bharat Mandapam NewDelhi</Popup>
+    </Marker>
+  </MapContainer>
+</div>
+
+
         </CardContent>
       </Card>
 

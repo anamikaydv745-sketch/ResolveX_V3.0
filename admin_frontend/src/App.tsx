@@ -9,6 +9,11 @@ import WasteManagement from "./pages/WasteManagement";
 import WaterQuality from "./pages/WaterQuality";
 import NotFound from "./pages/NotFound";
 
+
+
+
+
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -22,9 +27,8 @@ const App = () => (
             <Route path="/" element={<Overview />} />
             <Route path="/waste" element={<WasteManagement />} />
             <Route path="/water" element={<WaterQuality />} />
-            <Route path="/analytics" element={<Overview />} />
-            <Route path="/reports" element={<Overview />} />
-            <Route path="/settings" element={<Overview />} />
+           
+           
             <Route path="*" element={<NotFound />} />
           </Routes>
         </DashboardLayout>

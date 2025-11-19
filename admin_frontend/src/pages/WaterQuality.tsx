@@ -193,7 +193,7 @@ export default function WaterQuality() {
       </Card>
 
       {/* Heatmap Placeholder */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Contamination Heatmap</CardTitle>
         </CardHeader>
@@ -206,7 +206,7 @@ export default function WaterQuality() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }
