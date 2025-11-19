@@ -126,6 +126,17 @@ const handleSubmit = async (e: React.FormEvent) => {
   setIsSubmitting(true);
   setPredictionResult(null);
 
+   const storedUser = localStorage.getItem("userProfile");
+
+    if (!accessToken && !storedUser) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to submit a waste report.",
+        variant: "destructive",
+      });
+      return; // Stop the function here if not logged in
+    }
+
   try {
     // Prepare request payload
     const payload = {

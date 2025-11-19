@@ -228,6 +228,17 @@ const ReportWaste = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const storedUser = localStorage.getItem("userProfile");
+
+    if (!accessToken && !storedUser) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to submit a waste report.",
+        variant: "destructive",
+      });
+      return; // Stop the function here if not logged in
+    }
+
     if (!files.length) {
       toast({
         title: "Missing Media",
