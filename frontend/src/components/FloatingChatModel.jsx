@@ -169,7 +169,7 @@ const FloatingChatbotModal = () => {
           {/* Header */}
           <DialogHeader className="p-3 border-b border-white/10">
             <DialogTitle className="text-white text-lg flex items-center gap-2">
-              🤖 Civic AI Assistant
+              🤖 Sudhaar Sevak
             </DialogTitle>
           </DialogHeader>
 
