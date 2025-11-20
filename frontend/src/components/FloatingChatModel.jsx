@@ -17,7 +17,7 @@ const FloatingChatbotModal = () => {
   const [messages, setMessages] = useState([
     {
       role: "bot",
-      content: "👋 Hi! I’m your Civic Assistant. How can I help you today?",
+      content: "👋 Hi! I’m your Sudhaar Sevak. How can I help you today?",
     },
   ]);
   const [input, setInput] = useState("");
